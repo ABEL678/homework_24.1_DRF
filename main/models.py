@@ -7,6 +7,7 @@ class Course(models.Model):
     course_name = models.CharField(max_length=200, verbose_name='Название')
     course_preview = models.ImageField(upload_to='main/course/', verbose_name='Превью', **NULLABLE)
     course_description = models.TextField(verbose_name='Описание')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, **NULLABLE)
 
     def __str__(self):
         return f'{self.course_name}'
@@ -22,6 +23,7 @@ class Lesson(models.Model):
     lesson_description = models.TextField(verbose_name='Описание')
     lesson_preview = models.ImageField(upload_to='main/lesson/', verbose_name='Превью', **NULLABLE)
     video_url = models.URLField(verbose_name='Ссылка на видео', **NULLABLE)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, **NULLABLE)
 
     def __str__(self):
         return f'{self.lesson_name}'
@@ -43,6 +45,7 @@ class Payment(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.SET_NULL, **NULLABLE, verbose_name='Оплата урока')
     amount = models.PositiveIntegerField(verbose_name='Сумма оплаты')
     method = models.CharField(max_length=40, choices=METHOD_CHOICES, verbose_name='Способ оплаты')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, **NULLABLE)
 
     def __str__(self):
         return f'Платеж от {self.user} на сумму {self.amount}'

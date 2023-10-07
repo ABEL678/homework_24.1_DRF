@@ -25,13 +25,14 @@ class PaymentSerializer(serializers.ModelSerializer):
     course = SlugRelatedField(slug_field='course_name', queryset=Course.objects.all())
     lesson = SlugRelatedField(slug_field='lesson_name', queryset=Lesson.objects.all())
     user = SlugRelatedField(slug_field='first_name', queryset=User.objects.all())
+    owner = SlugRelatedField(slug_field='email', queryset=User.objects.all())
 
     class Meta:
         model = Payment
         fields = '__all__'
 
 
-class PaymentForUserSerializer(serializers.ModelSerializer):
+class PaymentForOwnerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
