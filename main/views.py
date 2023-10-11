@@ -2,17 +2,19 @@ from rest_framework import viewsets, generics
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
-from main.models import Course, Lesson, Payment
-from main.serializers import CourseSerializer, LessonSerializer, PaymentSerializer
+from main.models import Course, Lesson, Payment, Subscription
+from main.serializers import CourseSerializer, LessonSerializer, PaymentSerializer, SubscriptionSerializer
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from main.permissions import IsModeratorOrReadOnly, IsCourseOrLessonOwner, IsPaymentOwner, IsCourseOwner
 from users.models import UserRoles
+from main.paginators import LessonsPaginator
 
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     permission_classes = [IsAuthenticated, IsModeratorOrReadOnly | IsCourseOwner]
+    pagination_class = LessonsPaginator
 
     def get_queryset(self):
         if self.request.user.role == UserRoles.MODERATOR:
@@ -37,6 +39,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 class LessonCreateAPIView(generics.CreateAPIView):
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated, IsModeratorOrReadOnly | IsCourseOrLessonOwner]
+    pagination_class = LessonsPaginator
 
     def perform_create(self, serializer):
         if self.request.user.role == UserRoles.MODERATOR:
@@ -49,6 +52,7 @@ class LessonCreateAPIView(generics.CreateAPIView):
 class LessonListAPIView(generics.ListAPIView):
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated, IsModeratorOrReadOnly | IsCourseOrLessonOwner]
+    pagination_class = LessonsPaginator
 
     def get_queryset(self):
         if self.request.user.role == UserRoles.MODERATOR:
@@ -60,6 +64,7 @@ class LessonListAPIView(generics.ListAPIView):
 class LessonRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated, IsModeratorOrReadOnly | IsCourseOrLessonOwner]
+    pagination_class = LessonsPaginator
 
     def get_queryset(self):
         if self.request.user.role == UserRoles.MODERATOR:
@@ -71,6 +76,7 @@ class LessonRetrieveAPIView(generics.RetrieveAPIView):
 class LessonUpdateAPIView(generics.UpdateAPIView):
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated, IsModeratorOrReadOnly | IsCourseOrLessonOwner]
+    pagination_class = LessonsPaginator
 
     def get_queryset(self):
         if self.request.user.role == UserRoles.MODERATOR:
@@ -81,6 +87,7 @@ class LessonUpdateAPIView(generics.UpdateAPIView):
 
 class LessonDestroyAPIView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated, IsModeratorOrReadOnly | IsCourseOrLessonOwner]
+    pagination_class = LessonsPaginator
 
     def get_queryset(self):
         if self.request.user.role == UserRoles.MODERATOR:
@@ -121,3 +128,13 @@ class PaymentRetrieveAPIView(generics.RetrieveAPIView):
             return Payment.objects.all()
         else:
             return Payment.objects.filter(owner=self.request.user)
+
+
+class SubscriptionViewSet(viewsets.ModelViewSet):
+    serializer_class = SubscriptionSerializer
+    queryset = Subscription.objects.all()
+    lookup_field = 'id'
+
+    def subscription_create(self, serializer):
+        new_subscription = serializer.save(user=self.request.user)
+        new_subscription.save()
