@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from users.models import NULLABLE
+from typing import List, Optional
 
 
 class Course(models.Model):
@@ -8,6 +9,8 @@ class Course(models.Model):
     course_preview = models.ImageField(upload_to='main/course/', verbose_name='Превью', **NULLABLE)
     course_description = models.TextField(verbose_name='Описание')
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, **NULLABLE)
+    cost = models.DecimalField(max_digits=10, decimal_places=2, default=50000, verbose_name='Стоимость курса')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
 
     def __str__(self):
         return f'{self.course_name}'
@@ -24,6 +27,7 @@ class Lesson(models.Model):
     lesson_preview = models.ImageField(upload_to='main/lesson/', verbose_name='Превью', **NULLABLE)
     video_url = models.URLField(verbose_name='Ссылка на видео', **NULLABLE)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, **NULLABLE)
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
 
     def __str__(self):
         return f'{self.lesson_name}'
@@ -31,6 +35,14 @@ class Lesson(models.Model):
     class Meta:
         verbose_name = 'урок'
         verbose_name_plural = 'уроки'
+
+    @classmethod
+    def get_by_id(cls, lesson_id: int) -> Optional['Lesson']:
+
+        try:
+            return cls.objects.get(id=lesson_id)
+        except cls.DoesNotExist:
+            return None
 
 
 class Payment(models.Model):
@@ -66,3 +78,8 @@ class Subscription(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+
+    @classmethod
+    def get_all_course_subscriptions(cls) -> List['Lesson']:
+
+        return cls.objects.all()
