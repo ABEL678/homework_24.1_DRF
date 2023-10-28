@@ -10,13 +10,19 @@ from rest_framework.permissions import IsAuthenticated
 from main.permissions import IsModeratorOrReadOnly, IsCourseOrLessonOwner, IsPaymentOwner, IsCourseOwner
 from users.models import UserRoles
 from main.paginators import LessonsPaginator
-from django.conf import settings
+from rest_framework.serializers import Serializer
 
 import stripe
 from django.conf import settings
 from django.http import JsonResponse
 from django.views import View
 from .models import Course
+
+import logging
+from datetime import datetime
+from .tasks import was_updated_recently, send_course_update_notifications, send_lesson_update_notifications
+
+logger = logging.getLogger(__name__)
 
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -42,6 +48,13 @@ class CourseViewSet(viewsets.ModelViewSet):
         if self.request.user.role == UserRoles.MODERATOR:
             raise PermissionDenied("Вы не можете удалять курсы")
         instance.delete()
+
+    def perform_update(self, serializer: Serializer) -> None:
+        instance = self.get_object()
+        last_course_update = instance.updated_at
+        instance = serializer.save()
+        if not was_updated_recently(last_course_update):
+            send_course_update_notifications.delay(instance.id)
 
 
 class LessonCreateAPIView(generics.CreateAPIView):

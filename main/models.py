@@ -5,7 +5,7 @@ from typing import List, Optional
 
 
 class Course(models.Model):
-    course_name = models.CharField(max_length=200, verbose_name='Название')
+    course_name = models.CharField(max_length=200, related_name='subscriptions', verbose_name='Название')
     course_preview = models.ImageField(upload_to='main/course/', verbose_name='Превью', **NULLABLE)
     course_description = models.TextField(verbose_name='Описание')
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, **NULLABLE)
@@ -18,6 +18,17 @@ class Course(models.Model):
     class Meta:
         verbose_name = 'курс'
         verbose_name_plural = 'курсы'
+
+    @classmethod
+    def get_all_courses(cls) -> List['Course']:
+        return cls.objects.all()
+
+    @classmethod
+    def get_by_id(cls, lesson_id: int) -> Optional['Lesson']:
+        try:
+            return cls.objects.get(id=lesson_id)
+        except cls.DoesNotExist:
+            return None
 
 
 class Lesson(models.Model):
@@ -35,6 +46,10 @@ class Lesson(models.Model):
     class Meta:
         verbose_name = 'урок'
         verbose_name_plural = 'уроки'
+
+        @classmethod
+    def get_all_lessons(cls) -> List['Lesson']:
+        return cls.objects.all()
 
     @classmethod
     def get_by_id(cls, lesson_id: int) -> Optional['Lesson']:
